@@ -30,7 +30,7 @@ if(DEFINED ENV{HOUDINI_INSTALL_DIR})
 elseif(DEFINED ENV{HFS})
     file(REAL_PATH "$ENV{HFS}/../../../../.." _defaultHoudiniInstallDir)
 else()
-    set(_defaultHoudiniInstallDir "/Applications/Houdini/Houdini20.5.684")
+    set(_defaultHoudiniInstallDir "/Applications/Houdini/Houdini21.0.729")
 endif()
 set(HOUDINI_INSTALL_DIR "${_defaultHoudiniInstallDir}" CACHE PATH "Houdini install root")
 set(HoudiniPythonRoot "${HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/${PythonVer}")
@@ -48,11 +48,12 @@ ExternalProject_Add(Blosc
 set(CHAIN Blosc)
 
 ExternalProject_Add(Boost
-    URL https://sourceforge.net/projects/boost/files/boost/1.82.0/boost_1_82_0.tar.gz
+    URL https://sourceforge.net/projects/boost/files/boost/1.85.0/boost_1_85_0.tar.gz
     UPDATE_COMMAND ./bootstrap.sh --prefix=${InstallRoot}  --with-toolset=clang linkflags="-arch ${BOOST_ARCH}"
     CONFIGURE_COMMAND ""
     PATCH_COMMAND patch -p3 -N < ${THIS_DIR}/Boost.patch || true
-    BUILD_COMMAND ./b2 install ${JOBS_ARG} --user-config=${THIS_DIR}/user-config.jam --with-python python=${PythonVer} variant=release link=shared threading=multi architecture=arm address-model=64 define=BOOST_UNORDERED_HAVE_PIECEWISE_CONSTRUCT=0
+        COMMAND /usr/bin/perl -0pi -e "s/boost-install boost_python boost_numpy/boost-install boost_python/" libs/python/build/Jamfile
+    BUILD_COMMAND ./b2 install ${JOBS_ARG} --user-config=${THIS_DIR}/user-config.jam --with-python --with-iostreams --with-atomic --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-system --with-thread python=${PythonVer} variant=release link=shared threading=multi architecture=arm address-model=64 define=BOOST_UNORDERED_HAVE_PIECEWISE_CONSTRUCT=0
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND ""
     DEPENDS ${CHAIN}
@@ -78,7 +79,8 @@ ExternalProject_Add(Lua
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ""
     BUILD_COMMAND make ${JOBS_ARG} generic MYCFLAGS=-fPIC MYLIBS=-ldl
-    INSTALL_COMMAND cp src/lua src/luac ${InstallRoot}/bin
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${InstallRoot}/bin ${InstallRoot}/include ${InstallRoot}/lib
+            COMMAND cp src/lua src/luac ${InstallRoot}/bin
             COMMAND cp src/lua.h src/luaconf.h src/lualib.h src/lauxlib.h src/lua.hpp ${InstallRoot}/include
             COMMAND cp src/liblua.a ${InstallRoot}/lib
     DEPENDS ${CHAIN}
@@ -96,7 +98,7 @@ set(CHAIN MicroHttpd)
 
 ExternalProject_Add(OpenSubdiv
     GIT_REPOSITORY https://github.com/PixarAnimationStudios/OpenSubdiv
-    GIT_TAG 8ffa2b6566be10209529d7a0d1db02a0796b160c # v3_5_0
+    GIT_TAG d303eb5071fd3ce148e37d8f7fcd8f212143fe1a # v3_6_0
     BUILD_COMMAND make ${JOBS_ARG}
     CMAKE_ARGS
         -DCMAKE_PREFIX_PATH:PATH=${InstallRoot}
@@ -110,37 +112,65 @@ ExternalProject_Add(OpenSubdiv
 )
 set(CHAIN OpenSubdiv)
 
-ExternalProject_Add(OpenEXR
-    GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/openexr
-    GIT_TAG 8bc3741131db146ad08a5b83af9e6e48f0e94a03 # v2.5.7
-    PATCH_COMMAND patch IlmBase/Half/CMakeLists.txt ${THIS_DIR}/../Imath_include_paths.patch
+ExternalProject_Add(Imath
+    GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/Imath
+    GIT_TAG c0396a055a01bc537d32f435aee11a9b7ed6f0b5 # v3.1.12
     BUILD_COMMAND make ${JOBS_ARG}
     CMAKE_ARGS
         -DCMAKE_PREFIX_PATH:PATH=${InstallRoot}
         -DCMAKE_IGNORE_PATH:PATH=/opt/homebrew
         -DCMAKE_IGNORE_PREFIX_PATH:PATH=/opt/homebrew
-        -DBoost_ROOT=${InstallRoot}
         -DCMAKE_INSTALL_PREFIX:PATH=${InstallRoot}
-        -DBUILD_SHARED_LIBS=OFF
+        -DCMAKE_BUILD_TYPE=Release
+        -DBUILD_TESTING=OFF
+        -DIMATH_INSTALL_PKG_CONFIG=ON
+    DEPENDS ${CHAIN}
+)
+set(CHAIN Imath)
+
+ExternalProject_Add(OpenEXR
+    GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/openexr
+    GIT_TAG 55d1a1404cec5b4b187009d9f7fe55a5622ac4e5 # v3.3.2
+    BUILD_COMMAND make ${JOBS_ARG}
+    CMAKE_ARGS
+        -DCMAKE_PREFIX_PATH:PATH=${InstallRoot}
+        -DCMAKE_IGNORE_PATH:PATH=/opt/homebrew
+        -DCMAKE_IGNORE_PREFIX_PATH:PATH=/opt/homebrew
+        -DImath_ROOT=${InstallRoot}
+        -DImath_DIR=${InstallRoot}/lib/cmake/Imath
+        -DCMAKE_INSTALL_PREFIX:PATH=${InstallRoot}
+        -DCMAKE_BUILD_TYPE=Release
+        -DBUILD_SHARED_LIBS=ON
+        -DOPENEXR_BUILD_TOOLS=OFF
+        -DOPENEXR_BUILD_EXAMPLES=OFF
+        -DOPENEXR_BUILD_TESTS=OFF
+        -DOPENEXR_BUILD_PYTHON=OFF
+        -DOPENEXR_INSTALL_EXAMPLES=OFF
     DEPENDS ${CHAIN}
 )
 set(CHAIN OpenEXR)
 
 ExternalProject_Add(TBB
-    URL https://github.com/oneapi-src/oneTBB/archive/2020_U3.tar.gz
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND make ${JOBS_ARG} arch=arm64
-    INSTALL_COMMAND bash -c "cp build/*_release/libtbb*.* ${InstallRoot}/lib"
-            COMMAND bash -c "cp -r include/tbb ${InstallRoot}/include"
+    GIT_REPOSITORY https://github.com/oneapi-src/oneTBB.git
+    GIT_TAG 45587e94dfb6dfe00220c5f520020a5bc745e92f # v2022.1.0
+    BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release --parallel ${N}
+    INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
+    CMAKE_ARGS
+        -DCMAKE_PREFIX_PATH:PATH=${InstallRoot}
+        -DCMAKE_IGNORE_PATH:PATH=/opt/homebrew
+        -DCMAKE_IGNORE_PREFIX_PATH:PATH=/opt/homebrew
+        -DCMAKE_INSTALL_PREFIX:PATH=${InstallRoot}
+        -DCMAKE_BUILD_TYPE=Release
+        -DTBB_TEST=OFF
+        -DTBB_EXAMPLES=OFF
+        -DTBB_STRICT=OFF
     DEPENDS ${CHAIN}
 )
 set(CHAIN TBB)
 
 ExternalProject_Add(OpenVDB
     GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/openvdb
-    GIT_TAG ab935574cdb25c3df66b068fce2a3b0a74281c54 # v9.1.0
-    PATCH_COMMAND patch -p1 -N < ${THIS_DIR}/OpenVDB.patch || true
+    GIT_TAG f552aab85926ecd22abffdb0165815023c375447 # v12.0.1
     BUILD_COMMAND make ${JOBS_ARG}
     CMAKE_ARGS
         -DCMAKE_PREFIX_PATH:PATH=${InstallRoot}
@@ -150,6 +180,11 @@ ExternalProject_Add(OpenVDB
         -DBoost_ROOT=${InstallRoot}
         -DTBB_ROOT=${InstallRoot}
         -DCMAKE_INSTALL_PREFIX:PATH=${InstallRoot}
+        -DCMAKE_BUILD_TYPE=Release
+        -DOPENVDB_BUILD_BINARIES=OFF
+        -DOPENVDB_BUILD_UNITTESTS=OFF
+        -DOPENVDB_BUILD_PYTHON_MODULE=OFF
+        -DOPENVDB_BUILD_NANOVDB=OFF
     DEPENDS ${CHAIN}
 )
 set(CHAIN OpenVDB)
@@ -225,7 +260,7 @@ set(CHAIN embree)
 
 ExternalProject_Add(OpenColorIO
     GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/OpenColorIO
-    GIT_TAG b35fb73b8674176098d3084deaa9da3d111d72d1 # v2.3.0
+    GIT_TAG ebd076ae6c4362d089edfbc63d8fbf3d7538ea01 # v2.4.1
     BUILD_COMMAND make ${JOBS_ARG}
     CMAKE_ARGS
         -DCMAKE_PREFIX_PATH:PATH=${InstallRoot}
@@ -285,7 +320,7 @@ set(CHAIN pybind11)
 
 ExternalProject_Add(OpenImageIO
     GIT_REPOSITORY https://github.com/OpenImageIO/oiio
-    GIT_TAG 331a323468928c8017ad048b26d47c4e57a724a7 # 2.3.20.0
+    GIT_TAG 372c57696909513a8ea97180cb34b925c4fe09e3 # v2.5.18.0
     BUILD_COMMAND make ${JOBS_ARG}
     CMAKE_ARGS
         -DCMAKE_PREFIX_PATH:PATH=${InstallRoot}
@@ -293,12 +328,28 @@ ExternalProject_Add(OpenImageIO
         -DCMAKE_IGNORE_PREFIX_PATH:PATH=/opt/homebrew
         -DBoost_ROOT=${InstallRoot}
         -DIMath_ROOT=${InstallRoot}
+        -DImath_DIR=${InstallRoot}/lib/cmake/Imath
         -DDISABLE_CMAKE_SEARCH_PATHS=TRUE
         -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=TRUE
         -DOpenEXR_ROOT=${InstallRoot}
+        -DOpenEXR_DIR=${InstallRoot}/lib/cmake/OpenEXR
+        -DOpenColorIO_ROOT=${InstallRoot}
+        -DTBB_ROOT=${InstallRoot}
+        -DPython_ROOT_DIR=${HoudiniPythonRoot}
+        -DPython_EXECUTABLE=${HoudiniPythonRoot}/bin/python${PythonVer}
+        -DPython_LIBRARY=${HoudiniPythonRoot}/lib/libpython${PythonVer}.dylib
+        -DPython_INCLUDE_DIR=${HoudiniPythonRoot}/include/python${PythonVer}
         -DCMAKE_INSTALL_PREFIX:PATH=${InstallRoot}
+        -DCMAKE_BUILD_TYPE=Release
         -DUSE_QT=0
         -DUSE_PYTHON=1
+        -DUSE_OPENVDB=0
+        -DUSE_FFMPEG=0
+        -DUSE_OPENCV=0
+        -DUSE_WEBP=0
+        -DUSE_DCMTK=0
+        -DUSE_OPENJPEG=0
+        -DUSE_TESTS=0
     DEPENDS ${CHAIN}
 )
 set(CHAIN OpenImageIO)
@@ -307,25 +358,29 @@ ExternalProject_Add(OpenImageDenoise
    URL https://github.com/OpenImageDenoise/oidn/releases/download/v2.2.0/oidn-2.2.0.arm64.macos.tar.gz
    BUILD_COMMAND ""
    CONFIGURE_COMMAND ""
-   INSTALL_COMMAND bash -c "rm -f ../OpenImageDenoise/lib/libtbb.dylib"
+   INSTALL_COMMAND bash -c "rm -f ../OpenImageDenoise/lib/libtbb*.dylib"
            COMMAND bash -c "ditto ../OpenImageDenoise ${InstallRoot}"
    DEPENDS ${CHAIN}
 )
 set(CHAIN OpenImageDenoise)
 
-ExternalProject_Add(qt5
-    GIT_REPOSITORY https://code.qt.io/qt/qt5.git
-    GIT_SUBMODULES_RECURSE false
-    GIT_SHALLOW true
-    GIT_TAG 5bd237e89469a032ac9d4d33fcd3896897d6d245 # 5.12.12
-    GIT_SUBMODULES qtbase qtscript
-    PATCH_COMMAND patch -Ni ${THIS_DIR}/Qt5.patch || true
-    CONFIGURE_COMMAND ./configure -prefix ${InstallRoot} -confirm-license -opensource -no-egl -nomake examples -nomake tests QMAKE_APPLE_DEVICE_ARCHS=arm64 
-    BUILD_COMMAND make ${JOBS_ARG}
-    BUILD_IN_SOURCE 1
-    INSTALL_COMMAND make install
-    DEPENDS ${CHAIN}
-)
+if(EXISTS "${InstallRoot}/bin/qmake" AND EXISTS "${InstallRoot}/lib/QtCore.framework")
+    add_custom_target(qt5)
+else()
+    ExternalProject_Add(qt5
+        GIT_REPOSITORY https://code.qt.io/qt/qt5.git
+        GIT_SUBMODULES_RECURSE false
+        GIT_SHALLOW true
+        GIT_TAG 5bd237e89469a032ac9d4d33fcd3896897d6d245 # 5.12.12
+        GIT_SUBMODULES qtbase qtscript
+        PATCH_COMMAND patch -Ni ${THIS_DIR}/Qt5.patch || true
+        CONFIGURE_COMMAND ./configure -prefix ${InstallRoot} -confirm-license -opensource -no-egl -nomake examples -nomake tests QMAKE_APPLE_DEVICE_ARCHS=arm64
+        BUILD_COMMAND make ${JOBS_ARG}
+        BUILD_IN_SOURCE 1
+        INSTALL_COMMAND make install
+        DEPENDS ${CHAIN}
+    )
+endif()
 set(CHAIN qt5)
 
 if(NOT NO_USD)
@@ -378,6 +433,7 @@ set(CHAIN libuuid)
 
 ExternalProject_Add(OpenSSL
     GIT_REPOSITORY https://github.com/openssl/openssl.git
+    GIT_SUBMODULES ""
     # GIT_TAG a92271e03a8d0dee507b6f1e7f49512568b2c7ad # 3.1.0 - contains a bug on Apple Silicon
     GIT_TAG 31157bc0b46e04227b8468d3e6915e4d0332777c # 3.0.8
     CONFIGURE_COMMAND ./Configure darwin64-arm64 --prefix=${InstallRoot} --openssldir=${InstallRoot} -rpath ${InstallRoot}/lib

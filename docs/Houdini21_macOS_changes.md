@@ -5,12 +5,25 @@ Adds macOS/Houdini 21 compatibility updates required to build and install OpenMo
 
 Compatibility and integration improved in this branch. Native DWA authoring/runtime behavior in Solaris remains unresolved.
 
+## Current H21 Dependency Boundary Finding
+Current validation target is Houdini 21.0.729. The Houdini-facing boundary should use Houdini's ABI stack directly where USD/Hydra/Python are loaded:
+
+- Houdini USD/PXR 25.05
+- Houdini Python 3.11.7
+- Houdini `libpxr_python.dylib`
+- Houdini SideFX OCIO 2.4.1 for hdMoonray `ColorManagement`
+
+Do not solve Boost/TBB alignment by matching Houdini `hboost` or by forcing Houdini-first rpath ordering across hdMoonray targets. That approach is fragile because MoonRay renderer-core dependencies still come from the MoonRay-local dependency root. If Boost, TBB, or related renderer dependencies need H21/CY2025 alignment, the intended path is to bump/rebuild the MoonRay-local dependencies instead of binding those targets to Houdini's copies.
+
+Renderer-core dependencies should remain MoonRay-local unless they are rebuilt to H21-compatible upstream versions or a concrete ABI crossing proves direct Houdini linkage is safe. SideFX-renamed or namespaced libraries such as OCIO, OIIO, OpenEXR/Imath, and OpenVDB must not be consumed globally by MoonRay core through accidental include or rpath ordering.
+
 ## Tested Environment
 - macOS Tahoe
 - Xcode 26.0.1 class toolchain flow
 - Houdini 21 series validation target:
 - `21.0.680` (original PR target)
 - `21.0.671` (current local validation path)
+- `21.0.729` (current dependency-boundary validation target)
 
 ## Build/Dependency Changes
 - Boost dependency alignment moved to `1.82.0`.
@@ -75,4 +88,7 @@ Observed runtime/disconnect signal during simple DWA tests:
 ## Future Cleanup / Upstreaming Notes
 - Parameterize local Houdini/Python paths before upstream merge hardening.
 - Keep compatibility/build fixes separated from shader authoring/runtime behavior work.
+- Resolve the remaining dependency alignment explicitly; do not depend on Houdini-first rpath ordering or direct Houdini `hboost` matching for MoonRay targets.
+- If Boost/TBB-style alignment is required, bump/rebuild the MoonRay-local dependency stack rather than wiring those targets to Houdini's local copies.
+- Rebuild or isolate MoonRay-local renderer dependencies before treating TBB/OIIO/OpenEXR/OpenVDB/OpenSubdiv as fully H21-aligned.
 - Track native DWA Solaris authoring/runtime closure as a follow-up effort.

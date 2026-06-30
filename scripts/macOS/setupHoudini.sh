@@ -1,13 +1,13 @@
-omr_install_dir=/Applications/MoonRay/installs/openmoonray
-houdini_install_dir=${HOUDINI_INSTALL_DIR:-/Applications/Houdini/Houdini20.5.584}
+omr_install_dir=${MOONRAY_INSTALL_DIR:-/Applications/MoonRay/installs/openmoonray}
+houdini_install_dir=${HOUDINI_INSTALL_DIR:-/Applications/Houdini/Houdini21.0.729}
 houdini_fallback="${houdini_install_dir}/Frameworks/Houdini.framework/Versions/Current/Resources/houdini"
 
 # save/restore PYTHONPATH, since Houdini runtime can be sensitive to non-Houdini site-packages
-OLDPP=${PYTHONPATH}
+OLDPP=${PYTHONPATH:-}
 if [ -f "${omr_install_dir}/scripts/setup.sh" ]; then
     source "${omr_install_dir}/scripts/setup.sh"
 fi
-export PYTHONPATH=${OLDPP}
+export PYTHONPATH="${OLDPP:-}"
 
 export REL="${omr_install_dir}"
 export RDL2_DSO_PATH="${omr_install_dir}/rdl2dso.proxy:${omr_install_dir}/rdl2dso"
@@ -62,7 +62,13 @@ set_ocio_from_houdini_packages() {
         return
     fi
 
-    local package_dirs="${HOUDINI_PACKAGE_DIR:-${HOME}/Library/Preferences/houdini/20.5/packages:${houdini_install_dir}/Frameworks/Houdini.framework/Versions/Current/Resources/packages}"
+    local houdini_version
+    houdini_version="$(basename "${houdini_install_dir}" | sed -nE 's/^Houdini([0-9]+\\.[0-9]+).*/\\1/p')"
+    if [ -z "${houdini_version}" ]; then
+        houdini_version="21.0"
+    fi
+
+    local package_dirs="${HOUDINI_PACKAGE_DIR:-${HOME}/Library/Preferences/houdini/${houdini_version}/packages:${houdini_install_dir}/Frameworks/Houdini.framework/Versions/Current/Resources/packages}"
     local package_dir
     while IFS= read -r package_dir; do
         if [ ! -d "${package_dir}" ]; then
@@ -94,16 +100,16 @@ set_ocio_from_houdini_packages() {
 set_ocio_from_houdini_packages
 
 # Preserve any existing USD plugin search path while guaranteeing MoonRay plugin location is present.
-export PXR_PLUGINPATH_NAME="$(prepend_unique_path "${omr_install_dir}/plugin/pxr" "${PXR_PLUGINPATH_NAME}")"
-export PXR_PLUGIN_PATH="$(prepend_unique_path "${omr_install_dir}/plugin/pxr" "${PXR_PLUGIN_PATH}")"
+export PXR_PLUGINPATH_NAME="$(prepend_unique_path "${omr_install_dir}/plugin/pxr" "${PXR_PLUGINPATH_NAME:-}")"
+export PXR_PLUGIN_PATH="$(prepend_unique_path "${omr_install_dir}/plugin/pxr" "${PXR_PLUGIN_PATH:-}")"
 export PXR_PLUGINPATH_NAME="${PXR_PLUGINPATH_NAME%:}"
 export PXR_PLUGIN_PATH="${PXR_PLUGIN_PATH%:}"
-export PYTHONPATH="$(prepend_existing_path "${omr_install_dir}/lib/python" "${PYTHONPATH}")"
+export PYTHONPATH="$(prepend_existing_path "${omr_install_dir}/lib/python" "${PYTHONPATH:-}")"
 
 # Prefer layering MoonRay onto an existing Houdini env (from houdini_setup).
 # If that wasn't sourced yet, fall back to the configured Houdini resources path.
-if [ -n "${HOUDINI_PATH}" ]; then
-    export HOUDINI_PATH="$(prepend_existing_path "${omr_install_dir}/plugin/houdini" "${HOUDINI_PATH}")"
+if [ -n "${HOUDINI_PATH:-}" ]; then
+    export HOUDINI_PATH="$(prepend_existing_path "${omr_install_dir}/plugin/houdini" "${HOUDINI_PATH:-}")"
     export HOUDINI_PATH="$(prepend_existing_path "${omr_install_dir}/houdini" "${HOUDINI_PATH}")"
 else
     export HOUDINI_PATH="${houdini_fallback}:&"

@@ -48,6 +48,31 @@
             }
         },
         {
+            "name": "macos-environment-houdini21",
+            "hidden": true,
+            "inherits": "macos-environment",
+            "environment": {
+                "DEPS_ROOT"                 : "/Applications/MoonRay/installs",
+                "BUILD_DIR"                 : "/Applications/MoonRay/build",
+                "PREFIX_PXR"                : "/Applications/MoonRay/building/macOS/pxr-houdini",
+                "HOUDINI_INSTALL_DIR"       : "/Applications/Houdini/Houdini21.0.729",
+                "PXR_LIB_PREFIX"            : "$env{HOUDINI_INSTALL_DIR}/Frameworks/Houdini.framework/Versions/Current/Libraries",
+                "PXR_INCLUDE_PREFIX"        : "$env{HOUDINI_INSTALL_DIR}/Frameworks/Houdini.framework/Versions/Current/Resources/toolkit/include",
+                "PXR_DEPS_PREFIX"           : "$env{DEPS_ROOT}",
+                "PXR_BOOST_PYTHON_LIB"      : "$env{HOUDINI_INSTALL_DIR}/Frameworks/Houdini.framework/Versions/Current/Libraries/libhboost_python311.dylib"
+            },
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{DEPS_ROOT};$env{PREFIX_PXR}",
+                "PXR_LIB_PREFIX": "$env{PXR_LIB_PREFIX}",
+                "BOOST_PYTHON_COMPONENT_NAME": "python311",
+                "HDMOONRAY_HOUDINI_INSTALL_DIR": "$env{HOUDINI_INSTALL_DIR}",
+                "Python_ROOT_DIR": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.11",
+                "Python_EXECUTABLE": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+                "Python_LIBRARY": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.11/lib/libpython3.11.dylib",
+                "Python_INCLUDE_DIR": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.11/include/python3.11"
+            }
+        },
+        {
             "name": "macos-release",
             "displayName": "macOS Release",
             "inherits": "macos-environment",
@@ -68,6 +93,17 @@
                 "CMAKE_INSTALL_PREFIX": "/Applications/MoonRay/installs/openmoonray"
             },
             "generator": "Xcode"
+        },
+        {
+            "name": "macos-houdini21-release",
+            "displayName": "macOS Release (Houdini 21)",
+            "inherits": "macos-environment-houdini21",
+            "binaryDir": "$env{BUILD_DIR}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "/Applications/MoonRay/installs/openmoonray"
+            },
+            "generator": "Xcode"
         }
     ],
     "buildPresets": [
@@ -82,6 +118,13 @@
             "name": "macos-houdini-release",
             "displayName": "macOS Release (Houdini)",
             "configurePreset": "macos-houdini-release",
+            "configuration": "Release",
+            "targets": ["install"]
+        },
+        {
+            "name": "macos-houdini21-release",
+            "displayName": "macOS Release (Houdini 21)",
+            "configurePreset": "macos-houdini21-release",
             "configuration": "Release",
             "targets": ["install"]
         }

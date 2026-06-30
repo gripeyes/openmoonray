@@ -3,6 +3,11 @@
 ## Reviewer Summary
 Adds macOS/Houdini 21 compatibility updates required to build and install OpenMoonRay against Houdini 21 using Houdini-provided USD/PXR and Python 3.11. This includes Boost 1.82 alignment, dependency fetch/build fixes, Houdini USD library naming compatibility, and source-driven Houdini plugin payload installation. This branch validates build/install/selectability in Solaris, but does not resolve native DWA material authoring/render behavior in Houdini 21.
 
+## Current Dependency Boundary Note
+Latest local dependency-boundary validation is against Houdini 21.0.729. Houdini-facing code should use Houdini USD/PXR 25.05, Python 3.11.7, `libpxr_python.dylib`, and SideFX OCIO 2.4.1 directly at the USD/Hydra/Python boundary.
+
+Do not solve the remaining dependency work by matching Houdini `hboost` or by forcing Houdini-first rpath ordering. That creates a brittle mixed stack while MoonRay renderer-core dependencies still come from the MoonRay-local root. If Boost, TBB, or related dependencies need H21/CY2025 alignment, bump/rebuild them locally in MoonRay and keep direct Houdini linkage limited to the proven ABI boundary.
+
 ## Scope
 - Build/dependency/install compatibility for Houdini 21 on macOS.
 - No intended look/scene/rendering behavior change claim.
