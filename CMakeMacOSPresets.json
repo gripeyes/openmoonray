@@ -41,7 +41,6 @@
                 "ARRAS4_CORE_BUILD_TESTING": "OFF",
                 "MOONRAY_USE_METAL": "OFF",
                 "BUILD_MOONRAY_SDR_PLUGINS": "OFF",
-                "BUILD_HD_COMMANDS": "OFF",
                 "Vulkan_INCLUDE_DIR": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Houdini.framework/Versions/Current/Resources/toolkit/include",
                 "Vulkan_LIBRARY": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Houdini.framework/Versions/Current/Libraries/libvulkan.dylib",
                 "CMAKE_ISPC_COMPILER": "$env{ISPC}"
