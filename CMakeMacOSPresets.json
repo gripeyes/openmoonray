@@ -35,7 +35,7 @@
             "inherits": "macos-environment",
             "environment": {
                 "PREFIX_PXR"                : "/Applications/MoonRay/building/macOS/pxr-houdini",
-                "HOUDINI_INSTALL_DIR"       : "/Applications/Houdini/Houdini20.5.684",
+                "HOUDINI_INSTALL_DIR"       : "/Applications/Houdini/Houdini20.5.584",
                 "PXR_LIB_PREFIX"            : "$env{HOUDINI_INSTALL_DIR}/Frameworks/Houdini.framework/Versions/Current/Libraries",
                 "PXR_INCLUDE_PREFIX"        : "$env{HOUDINI_INSTALL_DIR}/Frameworks/Houdini.framework/Versions/Current/Resources/toolkit/include",
                 "PXR_DEPS_PREFIX"           : "$env{DEPS_ROOT}",
@@ -44,7 +44,11 @@
             "cacheVariables": {
                 "CMAKE_PREFIX_PATH": "$env{DEPS_ROOT};$env{PREFIX_PXR}",
                 "MOONRAY_USE_HOUDINI": "TRUE",
-                "BOOST_PYTHON_COMPONENT_NAME": "python311"
+                "BOOST_PYTHON_COMPONENT_NAME": "python311",
+                "Python_ROOT_DIR": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.11",
+                "Python_EXECUTABLE": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+                "Python_LIBRARY": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.11/lib/libpython3.11.dylib",
+                "Python_INCLUDE_DIR": "$env{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.11/include/python3.11"
             }
         },
         {

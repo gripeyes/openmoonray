@@ -30,7 +30,7 @@ if(DEFINED ENV{HOUDINI_INSTALL_DIR})
 elseif(DEFINED ENV{HFS})
     file(REAL_PATH "$ENV{HFS}/../../../../.." _defaultHoudiniInstallDir)
 else()
-    set(_defaultHoudiniInstallDir "/Applications/Houdini/Houdini20.5.684")
+    set(_defaultHoudiniInstallDir "/Applications/Houdini/Houdini20.5.584")
 endif()
 set(HOUDINI_INSTALL_DIR "${_defaultHoudiniInstallDir}" CACHE PATH "Houdini install root")
 set(HoudiniPythonRoot "${HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/${PythonVer}")
@@ -52,7 +52,7 @@ ExternalProject_Add(Boost
     UPDATE_COMMAND ./bootstrap.sh --prefix=${InstallRoot}  --with-toolset=clang linkflags="-arch ${BOOST_ARCH}"
     CONFIGURE_COMMAND ""
     PATCH_COMMAND patch -p3 -N < ${THIS_DIR}/Boost.patch || true
-    BUILD_COMMAND ./b2 install ${JOBS_ARG} --user-config=${THIS_DIR}/user-config.jam --with-python python=${PythonVer} variant=release link=shared threading=multi architecture=arm address-model=64 define=BOOST_UNORDERED_HAVE_PIECEWISE_CONSTRUCT=0
+    BUILD_COMMAND ./b2 install ${JOBS_ARG} --user-config=${THIS_DIR}/user-config.jam --with-python --with-iostreams --with-filesystem --with-system --with-thread --with-chrono --with-date_time --with-atomic --with-program_options --with-regex python=${PythonVer} variant=release link=shared threading=multi architecture=arm address-model=64 define=BOOST_UNORDERED_HAVE_PIECEWISE_CONSTRUCT=0
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND ""
     DEPENDS ${CHAIN}
