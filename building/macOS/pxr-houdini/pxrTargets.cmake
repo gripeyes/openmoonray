@@ -24,7 +24,7 @@ SET(HPYTHONINC $ENV{HOUDINI_INSTALL_DIR}/Frameworks/Python.framework/Versions/3.
 set(_targetsDefined)
 set(_targetsNotDefined)
 set(_expectedTargets)
-foreach(_expectedTarget arch tf gf js trace work plug vt ar kind sdf sdr pcp usd usdGeom usdVol usdMedia usdShade usdLux usdRender usdHydra usdRi usdSkel usdUI usdUtils usdPhysics garch hf hio cameraUtil pxOsd glf hgi hgiGL hgiInterop hd hdsi hdSt hdx hdMtlx usdImaging usdImagingGL usdSkelImaging usdVolImaging usdAppUtils usdMtlx)
+foreach(_expectedTarget arch tf gf js trace work plug vt ar kind sdf sdr pcp usd usdGeom usdVol usdMedia usdShade usdLux usdRender usdHydra usdRi usdSkel usdUI usdUtils usdPhysics garch hf hio cameraUtil pxOsd glf hgi hgiGL hgiInterop hd hdsi hdSt hdx hdMtlx usdImaging usdImagingGL usdSkelImaging usdVolImaging usdAppUtils usdMtlx usdviewq)
   list(APPEND _expectedTargets ${_expectedTarget})
   if(NOT TARGET ${_expectedTarget})
     list(APPEND _targetsNotDefined ${_expectedTarget})
@@ -494,6 +494,16 @@ set_target_properties(usdAppUtils PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_INCLUDE_PREFIX}"
   INTERFACE_LINK_LIBRARIES "garch;gf;hio;sdf;tf;usd;usdGeom;usdImagingGL;${_BOOST_PYTHON_LIB}"
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_DEPS_PREFIX}/include"
+)
+
+# Create imported target usdviewq
+add_library(usdviewq SHARED IMPORTED)
+
+set_target_properties(usdviewq PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS "PXR_PYTHON_ENABLED=1"
+  INTERFACE_INCLUDE_DIRECTORIES "${_INCLUDE_PREFIX};${HPYTHONINC}"
+  INTERFACE_LINK_LIBRARIES "tf;usd;usdGeom;hd;${_BOOST_PYTHON_LIB};${HPYTHONLIB}"
+  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${HPYTHONINC};${_DEPS_PREFIX}/include"
 )
 
 if(CMAKE_VERSION VERSION_LESS 2.8.12)

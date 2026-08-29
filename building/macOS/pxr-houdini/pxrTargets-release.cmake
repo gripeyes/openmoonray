@@ -464,5 +464,15 @@ set_target_properties(usdAppUtils PROPERTIES
 list(APPEND _IMPORT_CHECK_TARGETS usdAppUtils )
 list(APPEND _IMPORT_CHECK_FILES_FOR_usdAppUtils "${_LIB_PREFIX}/libpxr_usdAppUtils.dylib" )
 
+# Import target "usdviewq" for configuration "Release"
+set_property(TARGET usdviewq APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+set_target_properties(usdviewq PROPERTIES
+  IMPORTED_LOCATION_RELEASE "${_LIB_PREFIX}/libpxr_usdviewq.dylib"
+  IMPORTED_SONAME_RELEASE "libpxr_usdviewq.dylib"
+  )
+
+list(APPEND _IMPORT_CHECK_TARGETS usdviewq )
+list(APPEND _IMPORT_CHECK_FILES_FOR_usdviewq "${_LIB_PREFIX}/libpxr_usdviewq.dylib" )
+
 # Commands beyond this point should not need to know the version.
 set(CMAKE_IMPORT_FILE_VERSION)
