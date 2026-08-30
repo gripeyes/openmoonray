@@ -121,6 +121,27 @@ outside initially appears black.
 - installs renderer `.ds` files and HDAs beneath the OpenMoonRay Houdini plugin
   directory.
 
+### Artist-facing Solaris tools
+
+The H22 DCC payload includes an editable **MoonRay Material Builder** shelf
+tool. Create it inside a Solaris Material Library; it creates a native
+`DwaBaseMaterial` and `NormalDisplacement` network and publishes `surface` and
+`displacement` through Houdini 22's `suboutput` node. The builder is a plain
+editable subnet, so additional MoonRay VOPs can be inserted without editing a
+locked asset.
+
+The Light Filter Library includes the MoonRay filter HDAs supplied by the DCC
+plugin (`IntensityLightFilter`, `DecayLightFilter`, `CookieLightFilter`,
+`BarnDoorLightFilter`, `ColorRampLightFilter`, `CombineLightFilter`,
+`RodLightFilter`, and `VdbLightFilter`). These are intended to be created
+inside a Solaris Light Filter Library rather than a regular material network.
+
+Render Geometry already exposes MoonRay mesh tessellation controls in
+`HdMoonrayRendererPlugin_Geometry.ds`. Set the control mode to **Set or Create**
+before editing **Mesh Resolution** or **Adaptive Error**; their default
+**Do Nothing** mode intentionally leaves existing scene-authored primvars
+untouched.
+
 ### Arras and IPR lifecycle
 
 The apparent scene-update starvation had two independent causes.
